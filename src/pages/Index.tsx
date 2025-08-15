@@ -37,17 +37,17 @@ const Index = () => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const handleOptionSelect = (field: keyof FormData, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    const newFormData = { ...formData, [field]: value };
+    setFormData(newFormData);
     
-    // Проверяем условия блокировки
-    if ((field === 'blockReason' && value === 'Мы заметили нарушение правил') ||
-        (field === 'budget' && value === 'от 0Р до 1 500 Р')) {
-      if (currentStep === 8) {
-        setTimeout(() => {
-          setShowRejection(true);
-        }, 500);
-        return;
-      }
+    // Проверяем условия блокировки после каждого ответа на 8 вопросе
+    if (currentStep === 8 && 
+        (newFormData.blockReason === 'Мы заметили нарушение правил' || 
+         newFormData.budget === 'от 0Р до 1 500 Р')) {
+      setTimeout(() => {
+        setShowRejection(true);
+      }, 500);
+      return;
     }
     
     // Переход к следующему шагу
