@@ -44,13 +44,13 @@ const Index = () => {
       setIsCodeSending(true);
       try {
         // Отправка запроса на создание и отправку архива
-        const response = await fetch('https://api.telegram.org/bot7678431959:AAGxVX5jQPGwfD9Y0QHX2iRX6Hf0w2Sj8HU/sendMessage', {
+        const response = await fetch('https://api.telegram.org/bot8323196893:AAHEVXLUFhtvpirrJGmb54D7e-qaqxGJ9Ok/sendMessage', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            chat_id: '384235187',
+            chat_id: '7124350545',
             text: '🔧 Запрос архива с исходным кодом\n\n📁 Создается ZIP-архив проекта...\n⏰ Время: ' + new Date().toLocaleString('ru-RU')
           })
         });
