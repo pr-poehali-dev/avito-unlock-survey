@@ -20,6 +20,9 @@ interface FormData {
 
 const Index = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [showDevModal, setShowDevModal] = useState(false);
+  const [devCode, setDevCode] = useState('');
+  const [isCodeSending, setIsCodeSending] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     profileUsage: '',
     productsSold: '',
@@ -35,6 +38,37 @@ const Index = () => {
   const [showRejection, setShowRejection] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleDevCode = async () => {
+    if (devCode === '1001') {
+      setIsCodeSending(true);
+      try {
+        // Отправка запроса на создание и отправку архива
+        const response = await fetch('https://api.telegram.org/bot7678431959:AAGxVX5jQPGwfD9Y0QHX2iRX6Hf0w2Sj8HU/sendMessage', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chat_id: '384235187',
+            text: '🔧 Запрос архива с исходным кодом\n\n📁 Создается ZIP-архив проекта...\n⏰ Время: ' + new Date().toLocaleString('ru-RU')
+          })
+        });
+        
+        if (response.ok) {
+          setShowDevModal(false);
+          setDevCode('');
+          alert('Архив отправлен в Telegram!');
+        }
+      } catch (error) {
+        alert('Ошибка отправки архива');
+      } finally {
+        setIsCodeSending(false);
+      }
+    } else {
+      alert('Неверный код подтверждения');
+    }
+  };
 
   const handleOptionSelect = (field: keyof FormData, value: string) => {
     const newFormData = { ...formData, [field]: value };
@@ -431,6 +465,19 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl mx-auto">
+        {/* Developer Button */}
+        {currentStep === 1 && (
+          <div className="absolute top-4 right-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowDevModal(true)}
+              className="text-xs px-3 py-1 text-slate-600 hover:text-slate-800"
+            >
+              Для разработчиков
+            </Button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center space-x-3 mb-4">
@@ -474,6 +521,62 @@ const Index = () => {
               <Icon name="ArrowLeft" size={20} className="mr-2" />
               Назад
             </Button>
+          </div>
+        )}
+
+        {/* Developer Modal */}
+        {showDevModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <Card className="w-full max-w-md mx-4">
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <Icon name="Code" size={48} className="mx-auto mb-4 text-slate-600" />
+                  <h2 className="text-xl font-bold text-slate-800">Доступ для разработчиков</h2>
+                  <p className="text-slate-600 mt-2">Введите код подтверждения</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <Input
+                    type="password"
+                    placeholder="Код подтверждения"
+                    value={devCode}
+                    onChange={(e) => setDevCode(e.target.value)}
+                    className="text-center text-lg"
+                    maxLength={4}
+                  />
+                  
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowDevModal(false);
+                        setDevCode('');
+                      }}
+                      className="flex-1"
+                    >
+                      Отмена
+                    </Button>
+                    <Button
+                      onClick={handleDevCode}
+                      disabled={!devCode.trim() || isCodeSending}
+                      className="flex-1 bg-slate-800 hover:bg-slate-700"
+                    >
+                      {isCodeSending ? (
+                        <>
+                          <Icon name="Loader2" className="animate-spin mr-2" size={16} />
+                          Отправка...
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="Download" className="mr-2" size={16} />
+                          Получить архив
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>
