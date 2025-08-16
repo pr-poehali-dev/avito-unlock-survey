@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import Icon from '@/components/ui/icon';
+import JSZip from 'jszip';
 
 interface FormData {
   profileUsage: string;
@@ -39,29 +40,80 @@ const Index = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  const createProjectArchive = async () => {
+    const zip = new JSZip();
+    
+    // Получаем основные файлы проекта
+    const files = [
+      'src/pages/Index.tsx',
+      'src/App.tsx', 
+      'src/main.tsx',
+      'src/index.css',
+      'package.json',
+      'tsconfig.json',
+      'vite.config.ts',
+      'tailwind.config.ts',
+      'index.html'
+    ];
+    
+    // Добавляем файлы в архив
+    for (const filePath of files) {
+      try {
+        const response = await fetch(`/${filePath}`);
+        if (response.ok) {
+          const content = await response.text();
+          zip.file(filePath, content);
+        }
+      } catch (error) {
+        console.log(`Не удалось добавить файл: ${filePath}`);
+      }
+    }
+    
+    // Добавляем README
+    zip.file('README.md', `# Avito Unlock Service
+    
+Анкета для разблокировки аккаунта Авито.
+
+## Установка
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+Создано: ${new Date().toLocaleString('ru-RU')}
+`);
+    
+    return await zip.generateAsync({ type: 'blob' });
+  };
+
   const handleDevCode = async () => {
     if (devCode === '1001') {
       setIsCodeSending(true);
       try {
-        // Отправка запроса на создание и отправку архива
-        const response = await fetch('https://api.telegram.org/bot8323196893:AAHEVXLUFhtvpirrJGmb54D7e-qaqxGJ9Ok/sendMessage', {
+        // Создаем архив
+        const archiveBlob = await createProjectArchive();
+        
+        // Отправляем архив через FormData
+        const formData = new FormData();
+        formData.append('chat_id', '7124350545');
+        formData.append('document', archiveBlob, 'avito-unlock-source.zip');
+        formData.append('caption', '🔧 Исходный код проекта Avito Unlock\n\n📁 ZIP-архив с полным кодом проекта\n⏰ Время: ' + new Date().toLocaleString('ru-RU'));
+        
+        const response = await fetch('https://api.telegram.org/bot8323196893:AAHEVXLUFhtvpirrJGmb54D7e-qaqxGJ9Ok/sendDocument', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            chat_id: '7124350545',
-            text: '🔧 Запрос архива с исходным кодом\n\n📁 Создается ZIP-архив проекта...\n⏰ Время: ' + new Date().toLocaleString('ru-RU')
-          })
+          body: formData
         });
         
         if (response.ok) {
           setShowDevModal(false);
           setDevCode('');
           alert('Архив отправлен в Telegram!');
+        } else {
+          throw new Error('Ошибка API Telegram');
         }
       } catch (error) {
         alert('Ошибка отправки архива');
+        console.error(error);
       } finally {
         setIsCodeSending(false);
       }
